@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>중도상환수수료 계산기</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+    body { background-color: #f4f6f8; color: #333; padding: 20px 10px; }
+    .container { max-width: 480px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    h1 { font-size: 1.3rem; margin-bottom: 20px; text-align: center; }
+    
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-size: 0.9rem; font-weight: bold; margin-bottom: 5px; }
+    .input-box { display: flex; align-items: center; border: 1px solid #ccc; border-radius: 6px; padding: 8px 12px; }
+    .input-box input { width: 100%; border: none; outline: none; font-size: 1rem; }
+    .unit { font-size: 0.9rem; color: #666; margin-left: 5px; white-space: nowrap; }
+    
+    .calc-btn { width: 100%; padding: 12px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    
+    .result-box { display: none; margin-top: 20px; padding: 15px; background: #f0f7ff; border-radius: 8px; border: 1px solid #cce3ff; }
+    .result-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
+    .result-row:last-child { margin-bottom: 0; }
+    .highlight { font-weight: bold; color: #2563eb; }
+    
+    .info-text { font-size: 0.8rem; color: #666; margin-top: 10px; line-height: 1.4; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>중도상환수수료 계산기</h1>
+
+    <!-- 중도상환금액 -->
+    <div class="form-group">
+      <label>중도상환 금액</label>
+      <div class="input-box">
+        <input type="number" id="amount" placeholder="예: 3" step="0.1">
+        <span class="unit">억원</span>
+      </div>
+    </div>
+
+    <!-- 중도상환수수료율 -->
+    <div class="form-group">
+      <label>중도상환수수료율</label>
+      <div class="input-box">
+        <input type="number" id="rate" placeholder="예: 1.2 (기본 1.2~1.5%)" value="1.2" step="0.1">
+        <span class="unit">%</span>
+      </div>
+    </div>
+
+    <!-- 대출 전체 기간 -->
+    <div class="form-group">
+      <label>대출 약정 기간 (수수료 적용기간)</label>
+      <div class="input-box">
+        <input type="number" id="total-days" placeholder="3년(1095일) 보통 적용" value="1095">
+        <span class="unit">일</span>
+      </div>
+    </div>
+
+    <!-- 대출 잔여 기간 -->
+    <div class="form-group">
+      <label>남은 대출 기간 (잔여일수)</label>
+      <div class="input-box">
+        <input type="number" id="remain-days" placeholder="예: 365">
+        <span class="unit">일</span>
+      </div>
+    </div>
+
+    <button class="calc-btn" onclick="calculate()">수수료 계산하기</button>
+
+    <!-- 결과 화면 -->
+    <div class="result-box" id="result">
+      <div class="result-row">
+        <span>상환 원금</span>
+        <span id="val-amount">0 원</span>
+      </div>
+      <div class="result-row">
+        <span>기본 수수료율</span>
+        <span id="val-rate">0 %</span>
+      </div>
+      <div class="result-row">
+        <span>잔여 비율 (남은기간/전체기간)</span>
+        <span id="val-ratio">0 %</span>
+      </div>
+      <div class="result-row">
+        <span>최종 중도상환수수료</span>
+        <span class="highlight" id="val-fee">0 원</span>
+      </div>
+    </div>
+
+    <p class="info-text">
+      * 중도상환수수료 = 상환금액 × 수수료율 × (대출 잔여일수 ÷ 대출 약정기간)<br>
+      * 일반적으로 시중은행 주담대의 수수료 적용기간은 최장 3년(1,095일)이며, 3년 경과 시 수수료가 면제됩니다.
+    </p>
+  </div>
+
+  <script>
+    function calculate() {
+      const amountVal = parseFloat(document.getElementById('amount').value);
+      const rateVal = parseFloat(document.getElementById('rate').value);
+      const totalDays = parseInt(document.getElementById('total-days').value);
+      const remainDays = parseInt(document.getElementById('remain-days').value);
+
+      if (!amountVal || !rateVal || !totalDays || !remainDays) {
+        alert('모든 입력값을 입력해 주세요.');
+        return;
+      }
+
+      if (remainDays > totalDays) {
+        alert('남은 기간은 전체 약정 기간보다 클 수 없습니다.');
+        return;
+      }
+
+      const principal = amountVal * 100000000; // 억 -> 원
+      const rateDecimal = rateVal / 100;
+      
+      // 일할 계산 공식: 상환금액 * 수수료율 * (잔여일수 / 약정기간)
+      const fee = Math.round(principal * rateDecimal * (remainDays / totalDays));
+      const ratio = ((remainDays / totalDays) * 100).toFixed(1);
+
+      document.getElementById('val-amount').innerText = principal.toLocaleString() + ' 원';
+      document.getElementById('val-rate').innerText = rateVal + ' %';
+      document.getElementById('val-ratio').innerText = ratio + ' % (' + remainDays + '일/' + totalDays + '일)';
+      document.getElementById('val-fee').innerText = fee.toLocaleString() + ' 원';
+      document.getElementById('result').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
